@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SB 1808 Executive Risk Dashboard</title>
+    <style>
+        :root { --uf-blue: #0021A5; --uf-orange: #FA4616; --danger: #dc3545; --warning: #ffc107; --success: #28a745; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; }
+        .dashboard { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); border-left: 10px solid var(--uf-blue); }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 25px; }
+        .slider-box { margin-bottom: 25px; background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #e9ecef; }
+        label { display: flex; justify-content: space-between; font-weight: 600; font-size: 0.9rem; color: #444; }
+        .val-display { color: var(--uf-blue); font-weight: 800; }
+        input[type="range"] { width: 100%; margin-top: 10px; cursor: pointer; }
+        .impact-card { padding: 30px; border-radius: 10px; text-align: center; transition: all 0.3s ease; }
+        .total-fine { font-size: 3.5rem; font-weight: 900; margin: 10px 0; display: block; }
+        .status-badge { text-transform: uppercase; font-size: 0.8rem; letter-spacing: 2px; font-weight: bold; padding: 5px 15px; border-radius: 20px; display: inline-block; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="dashboard">
+    <div class="header">
+        <div>
+            <h1 style="margin:0; color: var(--uf-blue);">SB 1808 Compliance Risk</h1>
+            <small>Modeling Refund Mandates (Effective Jan 1, 2026)</small>
+        </div>
+        <div style="text-align:right; font-size: 0.8rem; font-weight: bold; color: var(--uf-orange);">FL STATUTE 408.12</div>
+    </div>
+
+    <div class="slider-box">
+        <label>Total Annual Revenue: <span class="val-display" id="revText">$15,000,000</span></label>
+        <input type="range" id="rev" min="1000000" max="50000000" step="1000000" value="15000000" oninput="update()">
+    </div>
+
+    <div class="slider-box">
+        <label>Monthly Refund Volume: <span class="val-display" id="volText">150</span></label>
+        <input type="range" id="vol" min="0" max="1000" step="10" value="150" oninput="update()">
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div class="slider-box">
+            <label>Determination Lag: <span class="val-display" id="lagText">15 days</span></label>
+            <input type="range" id="lag" min="0" max="60" value="15" oninput="update()">
+            <small style="color:#888; font-size:0.7rem;">Time to identify overpayment</small>
+        </div>
+        <div class="slider-box">
+            <label>Days Past 30-Day Limit: <span class="val-display" id="lateText">1 day</span></label>
+            <input type="range" id="late" min="0" max="60" value="1" oninput="update()">
+            <small style="color:#888; font-size:0.7rem;">Legal penalty clock</small>
+        </div>
+    </div>
+
+    <div id="statusCard" class="impact-card">
+        <span class="status-badge" id="badge">Analyzing...</span>
+        <span class="total-fine" id="fineOut">-$0</span>
+        <p id="insightText" style="margin:0; font-size: 0.9rem; font-weight: 500;"></p>
+    </div>
+</div>
+
+<script>
+    function update() {
+        const rev = parseInt(document.getElementById('rev').value);
+        const vol = parseInt(document.getElementById('vol').value);
+        const lag = parseInt(document.getElementById('lag').value);
+        const late = parseInt(document.getElementById('late').value);
+        const finePerDay = 500;
+
+        document.getElementById('revText').innerText = "$" + rev.toLocaleString();
+        document.getElementById('volText').innerText = vol;
+        document.getElementById('lagText').innerText = lag + " days";
+        document.getElementById('lateText').innerText = late + " days";
+
+        // Calculation: (Monthly Volume * $500 * Days Late) * 12 Months
+        const annualFine = (vol * finePerDay * late) * 12;
+        const impactPercent = (annualFine / rev) * 100;
+
+        document.getElementById('fineOut').innerText = "-$" + annualFine.toLocaleString();
+
+        const card = document.getElementById('statusCard');
+        const badge = document.getElementById('badge');
+        const insight = document.getElementById('insightText');
+
+        if (late === 0) {
+            card.style.background = "#d4edda"; card.style.color = "#155724";
+            badge.style.background = "#28a745"; badge.innerText = "Compliant";
+            insight.innerText = `Zero penalty. Efficiency maintained within 30-day statutory window.`;
+        } else if (impactPercent < 3) {
+            card.style.background = "#fff3cd"; card.style.color = "#856404";
+            badge.style.background = "#ffc107"; badge.innerText = "Risk Alert";
+            insight.innerText = `Moderate Impact: Fines represent ${impactPercent.toFixed(1)}% of annual revenue.`;
+        } else {
+            card.style.background = "#f8d7da"; card.style.color = "#721c24";
+            badge.style.background = "#dc3545"; badge.innerText = "Critical Failure";
+            insight.innerText = `Severe Margin Erosion: Fines represent ${impactPercent.toFixed(1)}% of annual revenue.`;
+        }
+    }
+    update();
+</script>
+
+</body>
+</html>
